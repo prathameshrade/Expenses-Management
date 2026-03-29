@@ -5,12 +5,13 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 import logging
-from app.core.exceptions import (
+from app.utils.exceptions import (
     InvalidCredentialsException,
-    NotFoundException,
+    ResourceNotFoundException,
     ConflictException,
     UnauthorizedException,
     ForbiddenException,
+    InvalidTokenException,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,22 +55,22 @@ async def invalid_credentials_handler(
         status_code=status.HTTP_401_UNAUTHORIZED,
         content={
             "success": False,
-            "message": exc.detail,
-            "errors": [exc.detail],
+            "message": exc.message,
+            "errors": [exc.message],
         },
     )
 
 
 async def not_found_handler(
-    request: Request, exc: NotFoundException
+    request: Request, exc: ResourceNotFoundException
 ) -> JSONResponse:
     """Handle not found errors"""
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
         content={
             "success": False,
-            "message": exc.detail,
-            "errors": [exc.detail],
+            "message": exc.message,
+            "errors": [exc.message],
         },
     )
 
@@ -82,8 +83,8 @@ async def conflict_handler(
         status_code=status.HTTP_409_CONFLICT,
         content={
             "success": False,
-            "message": exc.detail,
-            "errors": [exc.detail],
+            "message": exc.message,
+            "errors": [exc.message],
         },
     )
 
@@ -96,8 +97,8 @@ async def unauthorized_handler(
         status_code=status.HTTP_401_UNAUTHORIZED,
         content={
             "success": False,
-            "message": exc.detail,
-            "errors": [exc.detail],
+            "message": exc.message,
+            "errors": [exc.message],
         },
     )
 
@@ -110,8 +111,22 @@ async def forbidden_handler(
         status_code=status.HTTP_403_FORBIDDEN,
         content={
             "success": False,
-            "message": exc.detail,
-            "errors": [exc.detail],
+            "message": exc.message,
+            "errors": [exc.message],
+        },
+    )
+
+
+async def invalid_token_handler(
+    request: Request, exc: InvalidTokenException
+) -> JSONResponse:
+    """Handle invalid token errors"""
+    return JSONResponse(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content={
+            "success": False,
+            "message": exc.message,
+            "errors": [exc.message],
         },
     )
 
@@ -138,9 +153,10 @@ async def validation_error_handler(
 def add_exception_handlers(app: FastAPI):
     """Add all exception handlers to FastAPI app"""
     app.add_exception_handler(InvalidCredentialsException, invalid_credentials_handler)
-    app.add_exception_handler(NotFoundException, not_found_handler)
+    app.add_exception_handler(ResourceNotFoundException, not_found_handler)
     app.add_exception_handler(ConflictException, conflict_handler)
     app.add_exception_handler(UnauthorizedException, unauthorized_handler)
     app.add_exception_handler(ForbiddenException, forbidden_handler)
+    app.add_exception_handler(InvalidTokenException, invalid_token_handler)
     app.add_exception_handler(RequestValidationError, validation_error_handler)
     app.add_exception_handler(Exception, exception_handler)

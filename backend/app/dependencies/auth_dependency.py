@@ -4,10 +4,8 @@ Authentication dependency injections
 
 from fastapi import Depends, Header
 from typing import Optional
-from app.services.auth_service import AuthService
+from app.core.security import decode_token
 from app.utils.exceptions import InvalidTokenException, UnauthorizedException
-
-auth_service = AuthService()
 
 
 async def get_current_user(
@@ -27,8 +25,22 @@ async def get_current_user(
     token = parts[1]
 
     try:
-        user = await auth_service.verify_token(token)
-        return user
+        payload = decode_token(token)
+        if not payload:
+            raise InvalidTokenException("Token validation failed")
+        
+        user_id = payload.get("sub")
+        email = payload.get("email")
+        role = payload.get("role")
+
+        if not user_id or not email:
+            raise InvalidTokenException("Invalid token payload")
+
+        return {
+            "user_id": int(user_id),
+            "email": email,
+            "role": role,
+        }
     except InvalidTokenException:
         raise
     except Exception as e:

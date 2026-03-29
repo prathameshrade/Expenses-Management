@@ -23,8 +23,12 @@ class User(BaseModel):
     
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(255), nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.EMPLOYEE, nullable=False)
+    password_hash = Column("hashed_password", String(255), nullable=False)
+    role = Column(
+        Enum(UserRole, values_callable=lambda enum_cls: [item.value for item in enum_cls]),
+        default=UserRole.EMPLOYEE.value,
+        nullable=False,
+    )
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False, index=True)
     manager_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
@@ -32,7 +36,7 @@ class User(BaseModel):
     
     # Relationships
     company = relationship("Company", back_populates="users", foreign_keys=[company_id])
-    manager = relationship("User", remote_side=[id], backref="subordinates")
+    manager = relationship("User", remote_side="User.id", backref="subordinates")
     expenses = relationship("Expense", back_populates="employee", foreign_keys="Expense.employee_id")
     approvals = relationship("Approval", back_populates="approver", foreign_keys="Approval.approver_id")
     

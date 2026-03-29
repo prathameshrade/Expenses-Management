@@ -16,7 +16,7 @@ from app.utils.exceptions import (
     ValidationException,
     InsufficientPermissionsException,
 )
-from app.utils.validators import validate_email, validate_password
+# Note: validate_email and validate_password removed - use auth_routes validations instead
 from app.services.auth_service import pwd_context
 
 logger = logging.getLogger(__name__)

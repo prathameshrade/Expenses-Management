@@ -58,6 +58,7 @@ class ExpenseUpdate(BaseModel):
     currency: Optional[str] = Field(None, min_length=3, max_length=3)
     expense_date: Optional[datetime] = None
     receipt_url: Optional[str] = None
+    status: Optional[ExpenseStatus] = None
     
     class Config:
         json_schema_extra = {

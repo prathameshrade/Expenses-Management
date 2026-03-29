@@ -25,6 +25,7 @@ class SignupRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     password: str = Field(..., min_length=8, max_length=255)
     country: str = Field(..., min_length=2, max_length=100)
+    role: Optional[str] = Field("employee", pattern="^(admin|manager|employee)$")
     
     class Config:
         json_schema_extra = {
@@ -32,7 +33,8 @@ class SignupRequest(BaseModel):
                 "email": "newuser@example.com",
                 "name": "Jane Doe",
                 "password": "SecurePassword123",
-                "country": "US"
+                "country": "US",
+                "role": "employee"
             }
         }
 

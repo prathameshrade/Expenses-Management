@@ -33,15 +33,21 @@ class Expense(BaseModel):
     
     employee_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=False, index=True)
-    category = Column(Enum(ExpenseCategory), nullable=False)
+    category = Column(
+        Enum(ExpenseCategory, values_callable=lambda enum_cls: [item.value for item in enum_cls]),
+        nullable=False,
+    )
     description = Column(Text, nullable=False)
     amount = Column(Numeric(15, 2), nullable=False)
     currency = Column(String(3), nullable=False)
     amount_in_base_currency = Column(Numeric(15, 2), nullable=True)
     expense_date = Column(DateTime, nullable=False)
     receipt_url = Column(String(500), nullable=True)
-    status = Column(Enum(ExpenseStatus), default=ExpenseStatus.DRAFT, nullable=False)
-    rejection_reason = Column(Text, nullable=True)
+    status = Column(
+        Enum(ExpenseStatus, values_callable=lambda enum_cls: [item.value for item in enum_cls]),
+        default=ExpenseStatus.DRAFT.value,
+        nullable=False,
+    )
     
     # Relationships
     employee = relationship("User", back_populates="expenses", foreign_keys=[employee_id])

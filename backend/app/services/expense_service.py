@@ -20,7 +20,7 @@ from app.utils.exceptions import (
     ValidationException,
 )
 from app.utils.constants import ExpenseStatus, ExpenseCategory
-from app.services.currency_service import CurrencyService
+from app.services.curreny_service import CurrencyService
 
 logger = logging.getLogger(__name__)
 

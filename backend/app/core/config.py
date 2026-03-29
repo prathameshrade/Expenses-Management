@@ -38,27 +38,31 @@ class Settings(BaseSettings):
     )
     
     # Database
+    DATABASE_URL_OVERRIDE: Optional[str] = os.getenv("DATABASE_URL")
     DATABASE_DRIVER: str = os.getenv("DATABASE_DRIVER", "mysql+pymysql")
     DATABASE_USER: str = os.getenv("DATABASE_USER", "root")
     DATABASE_PASSWORD: str = os.getenv("DATABASE_PASSWORD", "")
     DATABASE_HOST: str = os.getenv("DATABASE_HOST", "localhost")
     DATABASE_PORT: int = int(os.getenv("DATABASE_PORT", 3306))
     DATABASE_NAME: str = os.getenv("DATABASE_NAME", "reimbursement_db")
-    
+
     @property
     def DATABASE_URL(self) -> str:
         """Get database URL"""
+        if self.DATABASE_URL_OVERRIDE:
+            return self.DATABASE_URL_OVERRIDE
+
         if self.DATABASE_PASSWORD:
             return (
                 f"{self.DATABASE_DRIVER}://{self.DATABASE_USER}:"
                 f"{self.DATABASE_PASSWORD}@{self.DATABASE_HOST}:"
                 f"{self.DATABASE_PORT}/{self.DATABASE_NAME}"
             )
-        else:
-            return (
-                f"{self.DATABASE_DRIVER}://{self.DATABASE_USER}@"
-                f"{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
-            )
+
+        return (
+            f"{self.DATABASE_DRIVER}://{self.DATABASE_USER}@"
+            f"{self.DATABASE_HOST}:{self.DATABASE_PORT}/{self.DATABASE_NAME}"
+        )
     
     # Email Configuration
     SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")

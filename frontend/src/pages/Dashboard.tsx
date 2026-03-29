@@ -1,40 +1,61 @@
-import React from 'react';
-import { useAuth } from '../hooks/useAuth';
-import Navbar from '../components/Common/Navbar';
+import Sidebar from "../components/Sidebar";
+import { useEffect, useState } from "react";
+import { listExpenses } from "../utils/api";
 
-const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+export default function Dashboard() {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  const [total, setTotal] = useState(0);
+  const [approved, setApproved] = useState(0);
+  const [pending, setPending] = useState(0);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const result = await listExpenses();
+        const expenses = result.data || [];
+        setTotal(expenses.length);
+        setApproved(expenses.filter((e: any) => e.status === "approved").length);
+        setPending(expenses.filter((e: any) => e.status !== "approved").length);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to load dashboard";
+        alert(message);
+      }
+    };
+
+    load();
+  }, []);
 
   return (
-    <div className="dashboard">
-      <Navbar />
-      <div className="dashboard-container">
-        <h1>Welcome, {user?.name}!</h1>
-        <p>You are logged in as: <strong>{user?.role.toUpperCase()}</strong></p>
+    <div className="layout">
+      <Sidebar />
 
-        {user?.role === 'employee' && (
-          <div className="dashboard-content">
-            <h2>Employee Dashboard</h2>
-            <p>Submit and track your expenses</p>
-          </div>
-        )}
+      <div className="content">
+        <h1>Dashboard</h1>
 
-        {user?.role === 'manager' && (
-          <div className="dashboard-content">
-            <h2>Manager Dashboard</h2>
-            <p>Review and approve expenses</p>
-          </div>
-        )}
+        <p>Welcome {user.email}</p>
+        <p>Role: {user.role}</p>
 
-        {user?.role === 'admin' && (
-          <div className="dashboard-content">
-            <h2>Admin Dashboard</h2>
-            <p>Manage users and approval rules</p>
+        <br />
+
+        {/* 🔥 Stats */}
+        <div style={{ display: "flex", gap: "20px" }}>
+          <div className="container">
+            <h3>Total Expenses</h3>
+            <p>{total}</p>
           </div>
-        )}
+
+          <div className="container">
+            <h3>Approved</h3>
+            <p>{approved}</p>
+          </div>
+
+          <div className="container">
+            <h3>Pending</h3>
+            <p>{pending}</p>
+          </div>
+        </div>
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

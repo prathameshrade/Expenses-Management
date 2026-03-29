@@ -1,70 +1,103 @@
-import React, { useEffect, useState } from 'react';
-import expenseService from '../services/expenseService';
-import { Expense } from '../types/expense';
-import Navbar from '../components/Common/Navbar';
-import toast from 'react-hot-toast';
+import { useEffect, useState } from "react";
+import Sidebar from "../components/Sidebar";
+import { listExpenses, updateExpenseStatus } from "../utils/api";
 
-const ExpenseList: React.FC = () => {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function ExpenseList() {
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
-    fetchExpenses();
+    const loadExpenses = async () => {
+      try {
+        const result = await listExpenses();
+        setExpenses(result.data || []);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to load expenses";
+        alert(message);
+      }
+    };
+
+    loadExpenses();
   }, []);
 
-  const fetchExpenses = async () => {
-    setLoading(true);
+  const updateStatus = async (expenseId: number, status: "approved" | "rejected") => {
     try {
-      const data = await expenseService.listExpenses();
-      setExpenses(data);
+      await updateExpenseStatus(expenseId, status);
+      const refreshed = await listExpenses();
+      setExpenses(refreshed.data || []);
     } catch (error) {
-      toast.error('Failed to load expenses');
-    } finally {
-      setLoading(false);
+      const message = error instanceof Error ? error.message : "Failed to update status";
+      alert(message);
     }
   };
 
-  if (loading) return <div className="loading">Loading expenses...</div>;
-
   return (
-    <div>
-      <Navbar />
-      <div className="page-container">
-        <h1>My Expenses</h1>
+    <div className="layout">
+      {/* 🔥 Sidebar */}
+      <Sidebar />
 
-        {expenses.length === 0 ? (
-          <p className="empty-state">No expenses found. Create one to get started!</p>
-        ) : (
-          <table className="expenses-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Amount</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {expenses.map((expense) => (
-                <tr key={expense.id}>
-                  <td>{new Date(expense.expense_date).toLocaleDateString()}</td>
-                  <td>{expense.category}</td>
-                  <td>{expense.description}</td>
-                  <td>{expense.amount} {expense.currency}</td>
-                  <td>
-                    <span className={`status status-${expense.status}`}>
-                      {expense.status}
-                    </span>
-                  </td>
+      {/* 🔥 Main Content */}
+      <div className="content">
+        <h2>All Expenses</h2>
+
+        <div className="table-container">
+          {expenses.length === 0 ? (
+            <p>No expenses found</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Amount</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+
+              <tbody>
+                {expenses.map((exp, index) => {
+                  const status = exp.status || "submitted";
+
+                  return (
+                    <tr key={exp.id || index}>
+                      <td>{exp.amount}</td>
+                      <td>{exp.category}</td>
+                      <td>{exp.description}</td>
+                      <td>{new Date(exp.expense_date).toLocaleDateString()}</td>
+                      <td>{status}</td>
+
+                      <td>
+                        {user.role === "manager" &&
+                          status === "submitted" && (
+                            <>
+                              <button
+                                onClick={() =>
+                                  updateStatus(exp.id, "approved")
+                                }
+                              >
+                                Approve
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  updateStatus(exp.id, "rejected")
+                                }
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   );
-};
-
-export default ExpenseList;
+}
